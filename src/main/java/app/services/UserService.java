@@ -19,6 +19,8 @@ public interface UserService extends ModelService<User>{
 	 
 	 public void requestPasswordChangeUsingPhoneNumber(String phoneNumber) throws Exception;
 	 
+	 public String sendInviteToUser(String emailAddress) throws Exception;
+	 
 	 public String requestPasswordChangeUsingEmailAddress(String emailAddress) throws Exception;
 	 
 	 public void resetPassword(PasswordParams passwordParams) throws Exception;
