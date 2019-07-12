@@ -8,6 +8,7 @@ import org.javalite.activeweb.controller_filters.TimingFilter;
 import app.controllers.LoginController;
 import app.controllers.PermissionsController;
 import app.controllers.RolesController;
+import app.controllers.TokenController;
 import app.controllers.UsersController;
 import app.filters.AuthorizationFilter;
 import app.filters.CatchFilter;

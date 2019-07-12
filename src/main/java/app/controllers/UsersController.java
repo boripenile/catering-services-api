@@ -13,6 +13,7 @@ import app.dto.LoggedUserDTO;
 import app.dto.RegistrationDTO;
 import app.dto.UserDetailsDTO;
 import app.dto.UserLogin;
+import app.models.OrganisationsUsersRequests;
 import app.models.User;
 import app.services.AuthService;
 import app.services.UserService;
@@ -33,6 +34,10 @@ public class UsersController extends AppController {
 			case "findUsersByOrganisation":
 				findUsersByOrganisation();
 				break;
+			case "findInvitedUsers":
+				logInfo("I am calling function findInvitedUsersByOrganisation()");
+				findInvitedUsersByOrganisation();
+				break;
 			default:
 				break;
 			}
@@ -44,6 +49,7 @@ public class UsersController extends AppController {
 	public void create() {
 		if (header("action") != null) {
 			String actionName = header("action").toString();
+			System.out.println("Action name: " + actionName);
 			switch (actionName) {
 			case "registerUser":
 				logInfo("I am calling function registerUser()");
@@ -65,11 +71,28 @@ public class UsersController extends AppController {
 				logInfo("I am calling function findUserDetails()");
 				findUserDetails();
 				break;
+			case "inviteUser":
+				logInfo("I am calling function inviteUser()");
+				inviteUser();
+				break;
+			case "resendInviteToUser":
+				logInfo("I am calling function resendInviteToUser()");
+				resendInviteToUser();
+				break;
+			case "deleteInvitedUser":
+				logInfo("I am calling function deleteInvitedUser()");
+				deleteInvitedUser();
+				break;
+			case "approveUserRequest":
+				logInfo("I am calling function approveUserRequest()");
+				approveUserRequest();
+				break;
 			default:
 				break;
 			}
 		}
 	}
+	
 	
 	public void findUserDetails() {
 		if (header("org_code") != null) {
@@ -188,6 +211,66 @@ public class UsersController extends AppController {
 		}
 	}
 	
+	public void resendInviteToUser() {
+		try {
+			if (header("request_code") != null) {
+				String requestCode = header("request_code").toString();
+				String result = userService.resendInviteToUser(requestCode);
+				if (result != null) {
+					view("code", 200, "message", result);
+					render("error");
+				}
+			} else {
+				view("code", 400, "message", "request_code must be user's email address or username");
+				render("error");
+			}
+		} catch (Exception e) {
+			logError(e.toString(), e);
+			view("code", 400, "message", e.getMessage() != null ? e.getMessage() : "Error occured");
+			render("error");
+		}
+	}
+	
+	public void approveUserRequest() {
+		try {
+			if (header("verify_code") != null) {
+				String requestCode = header("verify_code").toString();
+				String result = userService.approveInvite(requestCode);
+				if (result != null) {
+					view("code", 200, "message", result);
+					render("error");
+				}
+			} else {
+				view("code", 400, "message", "request_code must be user's email address or username");
+				render("error");
+			}
+		} catch (Exception e) {
+			logError(e.toString(), e);
+			view("code", 400, "message", e.getMessage() != null ? e.getMessage() : "Error occured");
+			render("error");
+		}
+	}
+	
+	public void deleteInvitedUser() {
+		try {
+			if (header("request_code") != null) {
+				String requestCode = header("request_code").toString();
+				String result = userService.removeInviteToUser(requestCode);
+				if (result != null) {
+					view("code", 200, "message", result);
+					render("error");
+				}
+			} else {
+				view("code", 400, "message", "request_code must be user's email address or username");
+				render("error");
+			}
+		} catch (Exception e) {
+			logError(e.toString(), e);
+			view("code", 400, "message", e.getMessage() != null ? e.getMessage() : "Error occured");
+			render("error");
+		}
+	}
+	
 	public void findUsersByOrganisation() {
 		try {
 			if (header("org_code") != null) {
@@ -207,6 +290,50 @@ public class UsersController extends AppController {
 		}
 	}
 	
+	public void findInvitedUsersByOrganisation() {
+		try {
+			if (header("org_code") != null) {
+				System.out.println("Organisation Code: " + header("org_code"));
+				LazyList<OrganisationsUsersRequests> users = 
+						userService.getOrganisationRequestToUsersByOrganisationCode(header("org_code"));
+				if (users != null) {
+					view("code", 200, "total", users.size(), "data", users.toJson(true));
+					render("message");
+				} else {
+					view("code", 400, "message", "No users found");
+					render("error");
+				}
+			}
+		} catch (Exception e) {
+			logError(e.toString(), e);
+			view("code", 400, "message", e.getMessage() != null ? e.getMessage() : "Error occured");
+			render("error");
+		}
+	}
+	
+	public void inviteUser() {
+		try {
+			if (header("email_address") != null && header("org_code") != null 
+					&& header("role_name") != null) {
+				String emailAddress = header("email_address").toString();
+				String orgCode = header("org_code").toString();
+				String roleName = header("role_name").toString();
+				String result = userService.sendInviteToUser(emailAddress, orgCode, roleName);
+				if (result != null) {
+					view("code", 200, "message", result);
+					render("error");
+				}
+			} else {
+				view("code", 400, "message", "email_address, org_code and role_name are required as header parameters");
+				render("error");
+			}
+		} catch (Exception e) {
+			logError(e.toString(), e);
+			view("code", 400, "message", e.getMessage() != null ? e.getMessage() : "Error occured");
+			render("error");
+		}
+	}
+	
 	public void findAll() {
 		try {
 			
@@ -216,6 +343,7 @@ public class UsersController extends AppController {
 			render("error");
 		}
 	}
+	
 	
 	@Override
 	protected String getContentType() {

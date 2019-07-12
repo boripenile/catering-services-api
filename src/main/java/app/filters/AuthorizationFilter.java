@@ -18,6 +18,8 @@ public class AuthorizationFilter extends HttpSupportFilter {
 	@Inject
 	private AuthService authService;
 	
+	public static String username;
+	
 	@Override
 	public void before() {
 		if (getRoute().getMethod().toString().equalsIgnoreCase("OPTIONS")) {
@@ -29,6 +31,7 @@ public class AuthorizationFilter extends HttpSupportFilter {
 			try {
 				Token token = authService.getTokenObject(tokenStr);
 				if (token.getRoles() != null) {
+					username = token.getUsername();
 					RoleDTO[] roles = token.getRoles();
 					for (int i = 0; i < token.getRoles().length; i++) {
 						if (roles[i].getName().equalsIgnoreCase("superadmin")) {
@@ -86,6 +89,8 @@ public class AuthorizationFilter extends HttpSupportFilter {
 			} else if (header("action") != null && header("action").toString().equalsIgnoreCase("verifyUserEmail")) {
 				return;
 			} else if (header("action") != null && header("action").toString().equalsIgnoreCase("validateReferralCode")) {
+				return;
+			} else if (header("action") != null && header("action").toString().equalsIgnoreCase("approveUserRequest")) {
 				return;
 			} else {
 				render("/layouts/error", Collections.map("code", 400, "message", "Token is requied in the header"));

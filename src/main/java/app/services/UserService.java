@@ -7,6 +7,7 @@ import org.javalite.activejdbc.LazyList;
 
 import app.dto.LoggedUserDTO;
 import app.dto.PasswordParams;
+import app.models.OrganisationsUsersRequests;
 import app.models.User;
 
 public interface UserService extends ModelService<User>{
@@ -19,7 +20,15 @@ public interface UserService extends ModelService<User>{
 	 
 	 public void requestPasswordChangeUsingPhoneNumber(String phoneNumber) throws Exception;
 	 
-	 public String sendInviteToUser(String emailAddress) throws Exception;
+	 public String sendInviteToUser (String emailAddress, String orgCode, String roleName) throws Exception;
+	 
+	 public String resendInviteToUser (String requestCode) throws Exception;
+	 
+	 public String removeInviteToUser (String requestCode) throws Exception;
+	 
+	 public LazyList<OrganisationsUsersRequests> getOrganisationRequestToUsersByOrganisationCode(String organisationCode) throws Exception;
+	 
+	 public String approveInvite (String requestCode) throws Exception;
 	 
 	 public String requestPasswordChangeUsingEmailAddress(String emailAddress) throws Exception;
 	 

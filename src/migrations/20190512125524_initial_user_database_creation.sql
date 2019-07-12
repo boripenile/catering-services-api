@@ -360,6 +360,18 @@ VALUES (27, 1, 'permissions:findPermissionNotSuper', 'Find Permissions', NOW(), 
 INSERT INTO `permissions` (`id`, `application_id`,`permission_name`, `description`, `created_at`, `created_by`) 
 VALUES (28, 1, 'users:findUserDetails', 'View User details and permissions', NOW(), 'system');
 
+INSERT INTO `permissions` (`id`, `application_id`,`permission_name`, `description`, `created_at`, `created_by`) 
+VALUES (29, 1, 'users:inviteUser', 'Ability to invite users', NOW(), 'system');
+
+INSERT INTO `permissions` (`id`, `application_id`,`permission_name`, `description`, `created_at`, `created_by`) 
+VALUES (30, 1, 'users:findInvitedUsers', 'Find invited users', NOW(), 'system');
+
+INSERT INTO `permissions` (`id`, `application_id`,`permission_name`, `description`, `created_at`, `created_by`) 
+VALUES (31, 1, 'users:resendInviteToUser', 'Resend invite to user', NOW(), 'system');
+
+INSERT INTO `permissions` (`id`, `application_id`,`permission_name`, `description`, `created_at`, `created_by`) 
+VALUES (32, 1, 'users:deleteInvitedUser', 'Delete invited user', NOW(), 'system');
+
 INSERT INTO `users_roles` (`id`, `user_id`, `role_id`, `organisation_id`, `created_at`)
 VALUES (1, '1', '1', '1', NOW());
 
@@ -466,15 +478,21 @@ INSERT INTO `roles_permissions` (`id`, `role_id`, `permission_id`, `organisation
 VALUES (34, '2', '26', '1', NOW());
 
 INSERT INTO `roles_permissions` (`id`, `role_id`, `permission_id`, `organisation_id`, `created_at`)
-VALUES (69, '2', '27', '2', NOW());
+VALUES (35, '2', '27', '1', NOW());
 
 INSERT INTO `roles_permissions` (`id`, `role_id`, `permission_id`, `organisation_id`, `created_at`)
-VALUES (70, '2', '27', '1', NOW());
+VALUES (36, '2', '28', '1', NOW());
 
 INSERT INTO `roles_permissions` (`id`, `role_id`, `permission_id`, `organisation_id`, `created_at`)
-VALUES (71, '2', '28', '2', NOW());
+VALUES (37, '2', '29', '1', NOW());
 
 INSERT INTO `roles_permissions` (`id`, `role_id`, `permission_id`, `organisation_id`, `created_at`)
-VALUES (72, '2', '28', '1', NOW());
+VALUES (38, '2', '30', '1', NOW());
+
+INSERT INTO `roles_permissions` (`id`, `role_id`, `permission_id`, `organisation_id`, `created_at`)
+VALUES (39, '2', '31', '1', NOW());
+
+INSERT INTO `roles_permissions` (`id`, `role_id`, `permission_id`, `organisation_id`, `created_at`)
+VALUES (40, '2', '32', '1', NOW());
 
 

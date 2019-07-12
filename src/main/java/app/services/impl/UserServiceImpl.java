@@ -13,6 +13,8 @@ import org.joda.time.DateTime;
 
 import com.google.inject.Inject;
 
+import app.controllers.AuthorizationFilter;
+import app.controllers.TokenController;
 import app.dto.LoggedUserDTO;
 import app.dto.PasswordParams;
 import app.dto.RegistrationDTO;
@@ -22,6 +24,7 @@ import app.mail.Mail;
 import app.models.Address;
 import app.models.Application;
 import app.models.Organisation;
+import app.models.OrganisationsUsersRequests;
 import app.models.Role;
 import app.models.User;
 import app.models.UsersOrganisations;
@@ -40,7 +43,7 @@ public class UserServiceImpl implements UserService {
 
 	@Inject
 	private RoleService roleService;
-	
+
 	static Properties properties = null;
 
 	static {
@@ -89,10 +92,10 @@ public class UserServiceImpl implements UserService {
 	public User create(User model) throws Exception {
 		try {
 			String[] results = Utils.getHashedPasswordAndSalt(model.getString("password"));
-			
+
 			model.set("password", results[0]);
 			model.set("salt", results[1]);
-			
+
 			if (!model.save()) {
 				return model;
 			}
@@ -172,7 +175,7 @@ public class UserServiceImpl implements UserService {
 		}
 	}
 
-	private String registerUserInformation(RegistrationDTO registration, LazyList<Role> roles, 
+	private String registerUserInformation(RegistrationDTO registration, LazyList<Role> roles,
 			Organisation myOrganisation, Application application)
 			throws Exception, MessagingException, IOException, TemplateException {
 		if (registration.getEmailAddress() != null && registration.getPhoneNumber() != null
@@ -193,14 +196,14 @@ public class UserServiceImpl implements UserService {
 				if (registration.getOrganisation() != null) {
 					Organisation organisation = createOrganistion(registration, application);
 					System.out.println(roles.get(0).toJson(true));
-					return createUserDetails(registration, roles, application, organisation, 
-							verificationCodePhone, verificationCodeEmail);
+					return createUserDetails(registration, roles, application, organisation, verificationCodePhone,
+							verificationCodeEmail);
 				} else if (myOrganisation != null) {
-					return createUserDetails(registration, roles, application, myOrganisation,
-							verificationCodePhone, verificationCodeEmail);
+					return createUserDetails(registration, roles, application, myOrganisation, verificationCodePhone,
+							verificationCodeEmail);
 				} else {
-					return createUserDetails(registration, null, application, null,
-							verificationCodePhone, verificationCodeEmail);
+					return createUserDetails(registration, null, application, null, verificationCodePhone,
+							verificationCodeEmail);
 				}
 			} else {
 				return null;
@@ -222,9 +225,10 @@ public class UserServiceImpl implements UserService {
 		return EmailService.sendSimpleMessage(mail, "verify-email.ftl");
 	}
 
-	private Organisation createOrganistion(RegistrationDTO registration, Application application) throws Exception, IOException {
+	private Organisation createOrganistion(RegistrationDTO registration, Application application)
+			throws Exception, IOException {
 		String parentReferralCode = null;
-		if (registration.getOrganisation().getReferralCode() != null 
+		if (registration.getOrganisation().getReferralCode() != null
 				&& !registration.getOrganisation().getReferralCode().isEmpty()) {
 			if (parentReferralCodeExist(registration.getOrganisation().getReferralCode())) {
 				parentReferralCode = registration.getOrganisation().getReferralCode();
@@ -260,7 +264,7 @@ public class UserServiceImpl implements UserService {
 	}
 
 	private String createUserDetails(RegistrationDTO registration, LazyList<Role> roles, Application application,
-			Organisation organisation, String verificationCodePhone, String verificationCodeEmail) throws Exception{
+			Organisation organisation, String verificationCodePhone, String verificationCodeEmail) throws Exception {
 		Address address = new Address();
 		address.set("phone_number", registration.getPhoneNumber());
 		address.set("created_by", registration.getUsername());
@@ -442,10 +446,11 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public User getUserByEmailOrUsername(String uniqueParameter) throws Exception {
 		try {
-			User user = User.findFirst("username=? or email_address=? and active=?", uniqueParameter, uniqueParameter, 1);
+			User user = User.findFirst("username=? or email_address=? and active=?", uniqueParameter, uniqueParameter,
+					1);
 			user.set("password", null);
 			return user;
-		} catch (Exception e){
+		} catch (Exception e) {
 			throw new Exception("We cannot verify the user unique identifier. Please check.");
 		}
 	}
@@ -460,6 +465,182 @@ public class UserServiceImpl implements UserService {
 	public String[] removeUsersFromOrganisation(UsersOrganisationDTO usersOrganisation) throws Exception {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public String sendInviteToUser(String emailAddress, String orgCode, String roleName) throws Exception {
+		if (!CommonUtil.checkInternetConnectivity()) {
+			throw new Exception("No internet connection.");
+		}
+		try {
+			User user = User.findFirst("email_address=?", emailAddress);
+			if (user != null) {
+				LazyList<UsersOrganisations> usersOrgs = UsersOrganisations.findBySQL("select users_organisations.* from "
+						+ "users_organisations inner join users on users_organisations.user_id=users.id inner join "
+						+ "organisations on users_organisations.organisation_id=organisations.id where "
+						+ "users.email_address=? and organisations.code=?", emailAddress, orgCode);
+				int size = usersOrgs.size();
+				if (size > 0) {
+					throw new Exception("User already exist in your company.");
+				} else {
+					StringBuilder name = new StringBuilder();
+					if (user.get("first_name") != null) {
+						name.append(user.get("first_name"));
+					}
+					if (user.get("last_name") != null) {
+						name.append(" ");
+						name.append(user.get("last_name"));
+					}
+					Organisation org = Organisation.findFirst("code=?", orgCode);
+					String code = Utils.genVerificationCode();
+					String title = "Invitation to Join " + org.getString("name");
+					String details = org.getString("name") + " requested to add you to " + "its members with a role of "
+							+ roleName + ".";
+
+					OrganisationsUsersRequests orgRequestToUser = prepareOrganisationRequest(emailAddress, user, name,
+							org, code, title, details, roleName);
+					System.out.println("About to send...");
+					String actionUrl = "request_email_url";
+					System.out.println("Found...");
+					boolean sent = Utils.sendEmail(name.toString() != null ? name.toString() : emailAddress,
+							org.getString("name"), emailAddress, title, details, code, actionUrl, "request-email.ftl");
+					if (sent) {
+						if (orgRequestToUser.save()) {
+							return "Invitation sent successfully";
+						}
+					}
+				}
+			} else {
+				throw new Exception("We can verify the user.");
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new Exception("We cannot verify the user unique identifier. Please check.");
+		}
+		return null;
+	}
+
+	private OrganisationsUsersRequests prepareOrganisationRequest(String emailAddress, User user, StringBuilder name,
+			Organisation org, String code, String title, String details, String information) {
+		OrganisationsUsersRequests orgRequestToUser = new OrganisationsUsersRequests();
+		orgRequestToUser.set("code", code);
+		orgRequestToUser.set("organisation_id", org.getId());
+		orgRequestToUser.set("organisation_code", org.getString("code"));
+		orgRequestToUser.set("organisation_name", org.getString("name"));
+		orgRequestToUser.set("user_id", user.getId());
+		orgRequestToUser.set("user_email_address", emailAddress);
+		orgRequestToUser.set("user_fullname", name.toString() != null ? name.toString() : emailAddress);
+		orgRequestToUser.set("information", information);
+		orgRequestToUser.set("title", title);
+		orgRequestToUser.set("details", details);
+		orgRequestToUser.set("created_by", app.filters.AuthorizationFilter.username);
+		return orgRequestToUser;
+	}
+
+	@Override
+	public String resendInviteToUser(String requestCode) throws Exception {
+		if (!CommonUtil.checkInternetConnectivity()) {
+			throw new Exception("No internet connection.");
+		}
+		try {
+			OrganisationsUsersRequests orgUserRequest = OrganisationsUsersRequests.findFirst("code=?", requestCode);
+			if (orgUserRequest != null) {
+				String actionUrl = "request_email_url";
+				boolean sent = Utils.sendEmail(orgUserRequest.getString("user_fullname"),
+						orgUserRequest.getString("organisation_name"), orgUserRequest.getString("user_email_address"),
+						orgUserRequest.getString("title"), orgUserRequest.getString("details"),
+						orgUserRequest.getString("code"), actionUrl, "request-email.ftl");
+				if (sent) {
+					return "Invitation resent successfully";
+				}
+			}
+
+		} catch (Exception e) {
+			throw new Exception("We cannot verify the user unique identifier. Please check.");
+		}
+		return null;
+	}
+
+	@Override
+	public String approveInvite(String requestCode) throws Exception {
+		if (!CommonUtil.checkInternetConnectivity()) {
+			throw new Exception("No internet connection.");
+		}
+		
+			OrganisationsUsersRequests orgUserRequest = OrganisationsUsersRequests.findFirst("code=?", requestCode);
+			if (orgUserRequest != null) {
+				User user = User.findFirst("id=?", orgUserRequest.get("user_id"));
+				Role role = Role.findFirst("role_name=?", orgUserRequest.get("information"));
+				if (!user.getBoolean("email_verified")) {
+					System.out.println("Not verified..");
+					throw new Exception("You have not verified your email address yet. Please confirm your email address.");
+				} else {
+					if (role != null) {
+						System.out.println("Role name: " + role.getString("role_name"));
+						Organisation org = Organisation.findFirst("id=?", orgUserRequest.get("organisation_id"));
+						UsersOrganisations usersOrgs = new UsersOrganisations();
+						usersOrgs.set("user_id", orgUserRequest.get("user_id"));
+						usersOrgs.set("organisation_id", orgUserRequest.get("organisation_id"));
+						usersOrgs.set("application_id", org.get("application_id"));
+						
+						System.out.println("Got here ... 000");
+						if (usersOrgs.save()) {
+							UsersRoles usersRoles = new UsersRoles();
+							usersRoles.set("user_id", orgUserRequest.get("user_id"));
+							usersRoles.set("role_id", role.getId());
+							usersRoles.set("organisation_id", orgUserRequest.get("organisation_id"));
+							
+							if (usersRoles.save()) {
+								orgUserRequest.set("status", "approved");
+								if (orgUserRequest.save()) {
+									boolean sent = Utils.sendEmail(orgUserRequest.getString("user_fullname"),
+											orgUserRequest.getString("organisation_name"), orgUserRequest.getString("user_email_address"),
+											"Invitation Approved", "You have successfully approved the invitation sent by "
+													+ orgUserRequest.getString("organisation_name"),
+											null, null, "request-email.ftl");
+									return "Invitation approved successfully";
+								}
+							} else {
+								UsersRoles.delete("user_id=? and role_id=? and organisation_id=?", 
+										orgUserRequest.get("user_id"), role.getId(), orgUserRequest.get("organisation_id"));
+							}
+						}
+					}
+					
+				}
+				
+			}
+		return null;
+	}
+
+	@Override
+	public String removeInviteToUser(String requestCode) throws Exception {
+		try {
+			int deleted = OrganisationsUsersRequests.delete("code=?", requestCode);
+			if (deleted > 0) {
+				return "Invitation deleted successfully";
+			}
+		} catch (Exception e) {
+			throw new Exception("We cannot verify the user unique identifier. Please check.");
+		}
+		return null;
+	}
+
+	@Override
+	public LazyList<OrganisationsUsersRequests> getOrganisationRequestToUsersByOrganisationCode(String organisationCode)
+			throws Exception {
+		try {
+			LazyList<OrganisationsUsersRequests> orgUserRequests 
+					= OrganisationsUsersRequests.find("organisation_code=?", organisationCode);
+			int size = orgUserRequests.size();
+			if (size > 0) {
+				return orgUserRequests;
+			} else {
+				return null;
+			}
+		} catch (Exception e) {
+			throw new Exception("We cannot verify the user unique identifier. Please check.");
+		}
 	}
 
 }
