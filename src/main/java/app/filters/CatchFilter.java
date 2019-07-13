@@ -10,9 +10,9 @@ public class CatchFilter extends HttpSupportFilter{
 		System.out.println("Error has occured...");
 		logError(e.toString(), e);
 		if (e.getMessage() != null) {
-			render("/layouts/error", Collections.map("code", 400, "message", e.getMessage()));
+			render("/system/error", Collections.map("code", 400, "message", e.getMessage()));
 		} else {
-			render("/layouts/error", Collections.map("code", 400, "message", "Something went wrong"));
+			render("/system/error", Collections.map("code", 400, "message", "Something went wrong"));
 		}
 	}
 

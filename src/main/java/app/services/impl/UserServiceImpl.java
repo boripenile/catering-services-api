@@ -388,7 +388,7 @@ public class UserServiceImpl implements UserService {
 		user.set("email_verified", true);
 		user.set("active", true);
 		if (user.save()) {
-			return authService.login(user.getString("username"), appCode);
+	return authService.login(user.getString("username"), appCode);
 		}
 		throw new Exception("Invalid email verification code or it has been verified");
 	}

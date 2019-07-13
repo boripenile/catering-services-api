@@ -41,19 +41,27 @@ public class LoginController extends AppController {
     				LoggedUserDTO loggedUser = authService.login(userLogin.getUsername(), userLogin.getPassword(), 
     						header("app_code"));
     				if (loggedUser.getApplication() != null) {
-    					if (loggedUser.getOrganisations().size() > 1) {
+    					if (loggedUser.getOrganisations() != null) {
+    						if (loggedUser.getOrganisations().size() > 1) {
+        						view("code", 200, "message", "Successful", "data", loggedUser.getUser().toJson(true),
+                						"application", loggedUser.getApplication() != null ? loggedUser.getApplication().toJson(true) : null,
+                						"organisation", (loggedUser.getOrganisations() != null && loggedUser.getOrganisations().size() > 0) ? loggedUser.getOrganisations().toJson(true) : null);
+                				render("userdata");
+        					} else if (loggedUser.getOrganisations().size() == 1) {
+        						view("code", 200, "message", "Successful", "data", loggedUser.getUser().toJson(true),
+                						"token", loggedUser.getToken(), "roles", JsonHelper.toJsonString(loggedUser.getRoles()),
+                						"permissions", JsonHelper.toJsonString(loggedUser.getPermissions()), 
+                						"application", loggedUser.getApplication() != null ? loggedUser.getApplication().toJson(true) : null,
+                						"organisation", (loggedUser.getOrganisations() != null && loggedUser.getOrganisations().size() > 0) ? loggedUser.getOrganisations().toJson(true) : null);
+                				render("message");
+        					}
+    					} else {
     						view("code", 200, "message", "Successful", "data", loggedUser.getUser().toJson(true),
-            						"application", loggedUser.getApplication() != null ? loggedUser.getApplication().toJson(true) : null,
-            						"organisation", (loggedUser.getOrganisations() != null && loggedUser.getOrganisations().size() > 0) ? loggedUser.getOrganisations().toJson(true) : null);
-            				render("userdata");
-    					} else if (loggedUser.getOrganisations().size() == 1) {
-    						view("code", 200, "message", "Successful", "data", loggedUser.getUser().toJson(true),
-            						"token", loggedUser.getToken(), "roles", JsonHelper.toJsonString(loggedUser.getRoles()),
-            						"permissions", JsonHelper.toJsonString(loggedUser.getPermissions()), 
-            						"application", loggedUser.getApplication() != null ? loggedUser.getApplication().toJson(true) : null,
-            						"organisation", (loggedUser.getOrganisations() != null && loggedUser.getOrganisations().size() > 0) ? loggedUser.getOrganisations().toJson(true) : null);
-            				render("message");
+    								"token", loggedUser.getToken(),
+            						"application", loggedUser.getApplication().toJson(true));
+            				render("user");
     					}
+    					
         				
     				} else {
         				view("code", 200, "message", "Successful", "data", loggedUser.getUser().toJson(true),

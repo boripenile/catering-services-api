@@ -23,10 +23,10 @@ public class UsersController extends AppController {
 
 	@Inject
 	private UserService userService;
-	
+
 	@Inject
 	private AuthService authService;
-	
+
 	public void index() {
 		if (header("action") != null) {
 			String actionName = header("action").toString();
@@ -45,7 +45,7 @@ public class UsersController extends AppController {
 			findAll();
 		}
 	}
-	
+
 	public void create() {
 		if (header("action") != null) {
 			String actionName = header("action").toString();
@@ -92,24 +92,23 @@ public class UsersController extends AppController {
 			}
 		}
 	}
-	
-	
+
 	public void findUserDetails() {
 		if (header("org_code") != null) {
 			try {
 				String payload = getRequestString();
-    			UserLogin userLogin = new Gson().fromJson(payload, UserLogin.class);
-    				UserDetailsDTO userDetails = authService.getUserRoleAndPermission(userLogin.getUsername(), 
-    						header("org_code"));
-    				if (userDetails.getUser() != null) {
-    					view("code", 200, "message", "Successful", "data", userDetails.getUser().toJson(true),
-        						"roles", JsonHelper.toJsonString(userDetails.getRoles()),
-        						"permissions", JsonHelper.toJsonString(userDetails.getPermissions()));
-        				render("userdetails");
-    				} else {
-        				view("code", 400, "message", "Invalid organisaion code was provided or username/password");
-        				render("error");
-    				}
+				UserLogin userLogin = new Gson().fromJson(payload, UserLogin.class);
+				UserDetailsDTO userDetails = authService.getUserRoleAndPermission(userLogin.getUsername(),
+						header("org_code"));
+				if (userDetails.getUser() != null) {
+					view("code", 200, "message", "Successful", "data", userDetails.getUser().toJson(true), "roles",
+							JsonHelper.toJsonString(userDetails.getRoles()), "permissions",
+							JsonHelper.toJsonString(userDetails.getPermissions()));
+					render("userdetails");
+				} else {
+					view("code", 400, "message", "Invalid organisaion code was provided or username/password");
+					render("error");
+				}
 			} catch (Exception e) {
 				view("code", 400, "message", e.getMessage());
 				render("error");
@@ -119,14 +118,14 @@ public class UsersController extends AppController {
 			render("error");
 		}
 	}
-	
+
 	public void registerUser() {
 		try {
 			String payload = getRequestString();
 			RegistrationDTO registration = new Gson().fromJson(payload, RegistrationDTO.class);
-			
+
 			String result = userService.registerUser(registration);
-			
+
 			if (result != null) {
 				view("code", 200, "message", result);
 				render("error");
@@ -140,25 +139,37 @@ public class UsersController extends AppController {
 			render("error");
 		}
 	}
-	
+
 	public void verifyUserEmail() {
 		try {
 			if (header("verify_code") != null && header("app_code") != null) {
 				String verifyCode = header("verify_code").toString();
 				String appCode = header("app_code").toString();
 				LoggedUserDTO loggedUser = userService.verifyEmailAddress(verifyCode, appCode);
-				if (loggedUser.getOrganisations().size() > 1) {
-					view("code", 200, "message", "Successful", "data", loggedUser.getUser().toJson(true),
-    						"application", loggedUser.getApplication() != null ? loggedUser.getApplication().toJson(true) : null,
-    						"organisation", (loggedUser.getOrganisations() != null && loggedUser.getOrganisations().size() > 0) ? loggedUser.getOrganisations().toJson(true) : null);
-    				render("userdata");
-				} else if (loggedUser.getOrganisations().size() == 1) {
-					view("code", 200, "message", "Successful", "data", loggedUser.getUser().toJson(true),
-    						"token", loggedUser.getToken(), "roles", JsonHelper.toJsonString(loggedUser.getRoles()),
-    						"permissions", JsonHelper.toJsonString(loggedUser.getPermissions()), 
-    						"application", loggedUser.getApplication() != null ? loggedUser.getApplication().toJson(true) : null,
-    						"organisation", (loggedUser.getOrganisations() != null && loggedUser.getOrganisations().size() > 0) ? loggedUser.getOrganisations().toJson(true) : null);
-    				render("result");
+				if (loggedUser.getOrganisations() != null) {
+					if (loggedUser.getOrganisations().size() > 1) {
+						view("code", 200, "message", "Successful", "data", loggedUser.getUser().toJson(true),
+								"application", loggedUser.getApplication().toJson(true),
+								"organisation",
+								(loggedUser.getOrganisations() != null && loggedUser.getOrganisations().size() > 0)
+										? loggedUser.getOrganisations().toJson(true)
+										: null);
+						render("userdata");
+					} else if (loggedUser.getOrganisations().size() == 1) {
+						view("code", 200, "message", "Successful", "data", loggedUser.getUser().toJson(true), "token",
+								loggedUser.getToken(), "roles", JsonHelper.toJsonString(loggedUser.getRoles()),
+								"permissions", JsonHelper.toJsonString(loggedUser.getPermissions()), "application",
+								loggedUser.getApplication() != null ? loggedUser.getApplication().toJson(true) : null,
+								"organisation",
+								(loggedUser.getOrganisations() != null && loggedUser.getOrganisations().size() > 0)
+										? loggedUser.getOrganisations().toJson(true)
+										: null);
+						render("result");
+					}
+				} else {
+					view("code", 200, "message", "Successful", "data", loggedUser.getUser().toJson(true),"application", 
+							loggedUser.getApplication().toJson(true));
+					render("user");
 				}
 			} else {
 				view("code", 400, "message", "verify_code and app_code are required as header parameters");
@@ -170,7 +181,7 @@ public class UsersController extends AppController {
 			render("error");
 		}
 	}
-	
+
 	public void validateReferralCode() {
 		try {
 			if (header("referral_code") != null && header("app_code") != null) {
@@ -190,7 +201,7 @@ public class UsersController extends AppController {
 			render("error");
 		}
 	}
-	
+
 	public void findUserByEmailOrUsername() {
 		try {
 			if (header("search_parameter") != null) {
@@ -210,7 +221,7 @@ public class UsersController extends AppController {
 			render("error");
 		}
 	}
-	
+
 	public void resendInviteToUser() {
 		try {
 			if (header("request_code") != null) {
@@ -230,7 +241,7 @@ public class UsersController extends AppController {
 			render("error");
 		}
 	}
-	
+
 	public void approveUserRequest() {
 		try {
 			if (header("verify_code") != null) {
@@ -250,7 +261,7 @@ public class UsersController extends AppController {
 			render("error");
 		}
 	}
-	
+
 	public void deleteInvitedUser() {
 		try {
 			if (header("request_code") != null) {
@@ -270,7 +281,7 @@ public class UsersController extends AppController {
 			render("error");
 		}
 	}
-	
+
 	public void findUsersByOrganisation() {
 		try {
 			if (header("org_code") != null) {
@@ -289,13 +300,13 @@ public class UsersController extends AppController {
 			render("error");
 		}
 	}
-	
+
 	public void findInvitedUsersByOrganisation() {
 		try {
 			if (header("org_code") != null) {
 				System.out.println("Organisation Code: " + header("org_code"));
-				LazyList<OrganisationsUsersRequests> users = 
-						userService.getOrganisationRequestToUsersByOrganisationCode(header("org_code"));
+				LazyList<OrganisationsUsersRequests> users = userService
+						.getOrganisationRequestToUsersByOrganisationCode(header("org_code"));
 				if (users != null) {
 					view("code", 200, "total", users.size(), "data", users.toJson(true));
 					render("message");
@@ -310,11 +321,10 @@ public class UsersController extends AppController {
 			render("error");
 		}
 	}
-	
+
 	public void inviteUser() {
 		try {
-			if (header("email_address") != null && header("org_code") != null 
-					&& header("role_name") != null) {
+			if (header("email_address") != null && header("org_code") != null && header("role_name") != null) {
 				String emailAddress = header("email_address").toString();
 				String orgCode = header("org_code").toString();
 				String roleName = header("role_name").toString();
@@ -333,18 +343,17 @@ public class UsersController extends AppController {
 			render("error");
 		}
 	}
-	
+
 	public void findAll() {
 		try {
-			
+
 		} catch (Exception e) {
 			logError(e.toString(), e);
 			view("code", 400, "message", e.getMessage() != null ? e.getMessage() : "Error occured");
 			render("error");
 		}
 	}
-	
-	
+
 	@Override
 	protected String getContentType() {
 		return "application/json";
