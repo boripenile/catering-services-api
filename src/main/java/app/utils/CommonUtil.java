@@ -114,6 +114,7 @@ public class CommonUtil {
 		
 	}
 	
+	
 	public static boolean checkInternetConnectivity() {
 		try {
 			URL url = new URL("https://www.google.com/");

@@ -41,7 +41,7 @@ public class AuthServiceImpl implements AuthService {
 	
 	@Override
 	public LoggedUserDTO login(String username, String password, String appCode) throws InvalidCredentialsException, JoseException {
-		try {
+//		try {
 			this.appCode = appCode;
 			LazyList<User> user = null;
 			if (password != null) {
@@ -108,10 +108,10 @@ public class AuthServiceImpl implements AuthService {
 				}
 				return loggedUser;
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-		}
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		} finally {
+//		}
 		return null;
 	}
 

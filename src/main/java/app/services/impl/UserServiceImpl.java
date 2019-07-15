@@ -147,12 +147,14 @@ public class UserServiceImpl implements UserService {
 		if (!CommonUtil.checkInternetConnectivity()) {
 			throw new Exception("No internet connectivity.");
 		}
+		if (!Utils.isEmailValid(registration.getEmailAddress())) {
+			throw new Exception("Invalid email address. Use an active email address.");
+		}
 		if (registration.getAppCode() != null) {
 			Application application = checkApplication(registration.getAppCode());
 			LazyList<Role> roles = null;
 			Organisation myOrganisation = null;
 			if (registration.getOrganisation() != null) {
-				System.out.println("I am loading roles...");
 				roles = Role.findBySQL("select roles.* from roles where roles.role_name=?", "admin");
 				int length = roles.size();
 				if (length == 0) {
@@ -445,6 +447,11 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public User getUserByEmailOrUsername(String uniqueParameter) throws Exception {
+		if (uniqueParameter != null && uniqueParameter.contains("@")) {
+			if (!Utils.isEmailValid(uniqueParameter)) {
+				throw new Exception("Invalid email address.");
+			}
+		}
 		try {
 			User user = User.findFirst("username=? or email_address=? and active=?", uniqueParameter, uniqueParameter,
 					1);
@@ -471,6 +478,9 @@ public class UserServiceImpl implements UserService {
 	public String sendInviteToUser(String emailAddress, String orgCode, String roleName) throws Exception {
 		if (!CommonUtil.checkInternetConnectivity()) {
 			throw new Exception("No internet connection.");
+		}
+		if (!Utils.isEmailValid(emailAddress)) {
+			throw new Exception("Invalid email address. Use n active email address.");
 		}
 		try {
 			User user = User.findFirst("email_address=?", emailAddress);

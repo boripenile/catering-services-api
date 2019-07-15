@@ -10,6 +10,11 @@ import java.util.Random;
 import javax.mail.MessagingException;
 
 import org.apache.commons.codec.binary.Base64;
+import org.javalite.http.Get;
+import org.javalite.http.Http;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 // import org.bouncycastle.util.encoders.Base64;
 
@@ -24,9 +29,11 @@ import freemarker.template.TemplateException;
 public class Utils {
 	
 	static Properties mailProps = null;
+	static Properties emailValidatorProp = null;
 
 	static {
 		mailProps = CommonUtil.loadPropertySettings("mail");
+		emailValidatorProp = CommonUtil.loadPropertySettings("emailvalidator");
 	}
 	
 	public static String genWalletID () {
@@ -212,7 +219,29 @@ public class Utils {
 		return results;
 	}
 	
+	public static boolean isEmailValid(String emailAddress) {
+		try {
+			if (emailAddress != null || emailAddress != "") {
+				System.out.println("Validating email address: " + emailAddress);
+				StringBuilder url = new StringBuilder();
+				url.append(emailValidatorProp.getProperty("url")).append(emailAddress);
+				Get getValidity = Http.get(url.toString(), 30000, 30000)
+						.header(emailValidatorProp.getProperty("host-name"), emailValidatorProp.getProperty("host-value"))
+						.header(emailValidatorProp.getProperty("key-name"), emailValidatorProp.getProperty("key-value"));
+				if (getValidity.responseCode() == 200) {
+					String response = getValidity.text("UTF-8");
+					Gson gson = new Gson();
+					EmailValidityDTO valid = gson.fromJson(response, EmailValidityDTO.class);
+					return valid.isValid();
+				} else {
+					return false;
+				} 
+			}
+		} catch (Exception e) {
+		}
+		return false;
+	}
 	public static void main(String[] args) {
-		//System.out.println(Utils.INSTANCE.genVerificationCode());
+		// System.out.println(Utils.isEmailValid("boripe2006@gmail.com"));
 	}
 }

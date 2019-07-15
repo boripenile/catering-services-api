@@ -173,7 +173,11 @@
 			<version>${activeweb.version}</version>
 			<scope>test</scope>
 		</dependency>
-
+		<dependency>
+		    <groupId>org.javalite</groupId>
+		    <artifactId>javalite-common</artifactId>
+		    <version>${activeweb.version}</version>
+		</dependency>
 		<dependency>
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
