@@ -73,6 +73,11 @@ public class Sms {
         }
         return true;
     }
+
+	@Override
+	public String toString() {
+		return "Sms [sender=" + sender + ", message=" + message + ", toNumbers=" + Arrays.toString(toNumbers) + "]";
+	}
     
     
 }

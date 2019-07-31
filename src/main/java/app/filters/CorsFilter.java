@@ -10,7 +10,7 @@ public class CorsFilter extends HttpSupportFilter {
 	private static final String headerRequestMethod = "Access-Control-Request-Method";
 	private static final String wildcard = "*";
 	private static final String headers = "app_code,id,user_id,role_id,role_name,action,org_code,"
-			+ "search_parameter,Accept,Content-Type,request_code,verify_code";
+			+ "search_parameter,Accept,Content-Type,request_code,verify_code,token,email_address";
 	
 	@Override
 	public void before() {
@@ -21,6 +21,6 @@ public class CorsFilter extends HttpSupportFilter {
 		header(headerAllowHeaders, headers);
 		header(headerAllowOrigin, wildcard);
 		header(headerRequestMethod, "OPTIONS, PATCH, POST, PUT, DELETE, GET");
-		header(headerAllowHeaders, wildcard);
+		//header(headerAllowHeaders, wildcard);
 	}
 }

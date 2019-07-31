@@ -1,0 +1,3 @@
+CREATE TABLE `stock` {
+	`id` BIGINT(11) PRIMARY KEY AUT
+}

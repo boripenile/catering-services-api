@@ -10,6 +10,8 @@ import java.util.Properties;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.javalite.http.Get;
+import org.javalite.http.Http;
 
 import app.utils.CommonUtil;
 
@@ -21,36 +23,46 @@ public class SmsService {
 	}
 	public static void sendSMS(Sms simpleSms) {
 		try {
-			@SuppressWarnings("resource")
-			DefaultHttpClient client = new DefaultHttpClient();
+//			@SuppressWarnings("resource")
+//			DefaultHttpClient client = new DefaultHttpClient();
 	        for (String number : simpleSms.getToNumbers()) {
 	            String strUri = properties.get("url_sms_provider") + "?" + 
 	            		properties.get("username_param_name") + "=" + encodeParam(properties.get("username").toString()) 
 	                    + "&" + properties.get("password_param_name") + "=" + properties.get("password") + 
 	                    "&" + properties.get("message_param_name") + "=" + encodeParam(simpleSms.getMessage()) + "&" + 
-	                    properties.get("receipients_param_name") + "="
+	                    properties.get("recipients_param_name") + "="
 	                    + encodeParam(number) + "&" + properties.get("sender_param_name") + "=" + encodeParam(simpleSms.getSender()) + "&flash=1";
-	            URI uri = new URI(strUri);
-	            HttpGet get = new HttpGet(uri);
-
-	            get.addHeader("accept", "text/html");
-
-	            HttpResponse response = client.execute(get);
-	            if (response.getStatusLine().getStatusCode() != 200) {
-	                throw new RuntimeException("Operation failed: " + response.getStatusLine().getStatusCode());
+	            System.out.println("Connecting..." + strUri);
+	            
+	            Get getSms = Http.get(strUri, 30000, 3000)
+	            			.header("accept", "text/html");
+	            
+	            System.out.println(getSms.responseCode());
+	            System.out.println(getSms.text("UTF-8"));
+	            if (getSms.responseCode() == 200) {
+	            	System.out.println(getSms.text("UTF-8"));
 	            }
-
-	            System.out.println("Content-Type: " + response.getEntity().getContentType().getValue());
-
-	            BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
-
-	            String line = reader.readLine();
-	            while (line != null) {
-	                System.out.println(line);
-	                line = reader.readLine();
-	            }
+//	            URI uri = new URI(strUri);
+//	            HttpGet get = new HttpGet(uri);
+//	            
+//	            get.addHeader("accept", "text/html");
+//
+//	            HttpResponse response = client.execute(get);
+//	            if (response.getStatusLine().getStatusCode() != 200) {
+//	                throw new RuntimeException("Operation failed: " + response.getStatusLine().getStatusCode());
+//	            }
+//
+//	            System.out.println("Content-Type: " + response.getEntity().getContentType().getValue());
+//
+//	            BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
+//
+//	            String line = reader.readLine();
+//	            while (line != null) {
+//	                System.out.println(line);
+//	                line = reader.readLine();
+//	            }
 	        }
-	        client.getConnectionManager().shutdown();
+//	        client.getConnectionManager().shutdown();
 		} catch (Exception e) {
 			// TODO: handle exception
 		}  

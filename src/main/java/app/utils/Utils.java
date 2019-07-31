@@ -174,6 +174,7 @@ public class Utils {
 			sms.setMessage("Your have reset your password successfully "
 					+ "on "+ appShortName +".\nWelcome on board!");
 		}
+		System.out.println(sms.toString());
 		SmsService.sendSMS(sms);
 	}
 	
@@ -242,6 +243,11 @@ public class Utils {
 		return false;
 	}
 	public static void main(String[] args) {
-		// System.out.println(Utils.isEmailValid("boripe2006@gmail.com"));
+		try {
+			sendVerificationSMS(new String[] {"08069566914"}, "890987", false, false, "APP");
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }
